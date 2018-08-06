@@ -1,11 +1,11 @@
 extern crate futures;
 extern crate telegram_bot;
-extern crate tokio;
+extern crate tokio_core;
 
 use std::env;
 
-use futures::{Stream, future::lazy};
-
+use futures::Stream;
+use tokio_core::reactor::Core;
 use telegram_bot::*;
 
 fn process(api: Api, message: Message) {
@@ -20,34 +20,20 @@ fn process(api: Api, message: Message) {
     }
 }
 
+
 fn main() {
-    let mut runtime = tokio::runtime::current_thread::Runtime::new().unwrap();
-    runtime.block_on(lazy(|| {
-        let token = env::var("TELEGRAM_BOT_TOKEN").unwrap();
-        let api = Api::configure(token).build().unwrap();
+    let token = env::var("TELEGRAM_BOT_TOKEN").unwrap();
 
-        let stream = api.stream().then(|mb_update| {
-            let res: Result<Result<Update, Error>, ()> = Ok(mb_update);
-            res
-        });
+    let mut core = Core::new().unwrap();
 
-        tokio::executor::current_thread::spawn(
-            stream.for_each(move |update| {
-                match update {
-                    Ok(update) => {
-                        if let UpdateKind::Message(message) = update.kind {
-                            process(api.clone(), message)
-                        }
-                    }
-                    Err(_) => {}
-                }
+    let api = Api::configure(token).build(core.handle()).unwrap();
 
-                Ok(())
-            })
-        );
+    let future = api.stream().for_each(|update| {
+        if let UpdateKind::Message(message) = update.kind {
+            process(api.clone(), message)
+        }
+        Ok(())
+    });
 
-        Ok::<_, ()>(())
-    })).unwrap();
-
-    runtime.run().unwrap();
+    core.run(future).unwrap();
 }

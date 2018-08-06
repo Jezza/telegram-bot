@@ -1,29 +1,18 @@
-extern crate futures;
 extern crate telegram_bot;
-extern crate tokio;
+extern crate tokio_core;
 
 use std::env;
 
-use futures::{Future, future::lazy};
-
-use telegram_bot::*;
+use tokio_core::reactor::Core;
+use telegram_bot::{Api, GetMe};
 
 fn main() {
-    let mut runtime = tokio::runtime::current_thread::Runtime::new().unwrap();
-    runtime.block_on(lazy(|| {
-        let token = env::var("TELEGRAM_BOT_TOKEN").unwrap();
-        let api = Api::configure(token).build().unwrap();
+    let token = env::var("TELEGRAM_BOT_TOKEN").unwrap();
 
-        tokio::executor::current_thread::spawn(
-            api.send(GetMe).then(|r| {
-                println!("{:?}", r);
+    let mut core = Core::new().unwrap();
 
-                Ok(())
-            })
-        );
+    let api = Api::configure(token).build(core.handle()).unwrap();
+    let future = api.send(GetMe);
 
-        Ok::<_, Error>(())
-    })).unwrap();
-
-    runtime.run().unwrap();
+    println!("{:?}", core.run(future))
 }
