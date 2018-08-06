@@ -2,15 +2,14 @@ use std::cmp::max;
 use std::collections::VecDeque;
 use std::time::Duration;
 
-use futures::{Future, Stream, Poll, Async};
-use futures::future;
-use tokio_core::reactor::{Handle, Timeout};
+use futures::{Async, Future, Poll, Stream};
+use tokio_timer;
 
-use telegram_bot_raw::{GetUpdates, Update, Integer};
+use telegram_bot_raw::{GetUpdates, Integer, Update};
 
 use api::Api;
 use errors::Error;
-use future::{TelegramFuture, NewTelegramFuture};
+use future::{NewTelegramFuture, TelegramFuture};
 
 const TELEGRAM_LONG_POLL_TIMEOUT_SECONDS: u64 = 5;
 const TELEGRAM_LONG_POLL_LIMIT_MESSAGES: Integer = 100;
@@ -21,7 +20,6 @@ const TELEGRAM_LONG_POLL_ERROR_DELAY_MILLISECONDS: u64 = 500;
 #[must_use = "streams do nothing unless polled"]
 pub struct UpdatesStream {
     api: Api,
-    handle: Handle,
     last_update: Integer,
     buffer: VecDeque<Update>,
     current_request: Option<TelegramFuture<Option<Vec<Update>>>>,
@@ -36,7 +34,7 @@ impl Stream for UpdatesStream {
 
     fn poll(&mut self) -> Poll<Option<Self::Item>, Self::Error> {
         if let Some(value) = self.buffer.pop_front() {
-            return Ok(Async::Ready(Some(value)))
+            return Ok(Async::Ready(Some(value)));
         }
 
         let result = match self.current_request {
@@ -52,22 +50,20 @@ impl Stream for UpdatesStream {
                             self.buffer.push_back(update)
                         }
                         Ok(true)
-                    },
-                    Err(err) => Err(err)
+                    }
+                    Err(err) => Err(err),
                 }
             }
         };
 
         match result {
             Err(err) => {
-                let timeout_future = future::result(Timeout::new(self.error_delay, &self.handle));
-
-                let timeout_future = timeout_future.map_err(From::from).and_then(|timeout| {
-                    timeout.map_err(From::from).map(|()| None)
-                });
+                let timeout_future = tokio_timer::sleep(self.error_delay)
+                    .map_err(From::from)
+                    .map(|()| None);
 
                 self.current_request = Some(TelegramFuture::new(Box::new(timeout_future)));
-                return Err(err)
+                return Err(err);
             }
             Ok(false) => {
                 let timeout = self.timeout + Duration::from_secs(1);
@@ -80,7 +76,7 @@ impl Stream for UpdatesStream {
 
                 self.current_request = Some(request);
                 self.poll()
-            },
+            }
             Ok(true) => {
                 self.current_request = None;
                 self.poll()
@@ -90,14 +86,13 @@ impl Stream for UpdatesStream {
 }
 
 pub trait NewUpdatesStream {
-    fn new(api: Api, handle: Handle) -> Self;
+    fn new(api: Api) -> Self;
 }
 
-impl NewUpdatesStream for UpdatesStream{
-    fn new(api: Api, handle: Handle) -> Self {
+impl NewUpdatesStream for UpdatesStream {
+    fn new(api: Api) -> Self {
         UpdatesStream {
             api: api,
-            handle: handle,
             last_update: 0,
             buffer: VecDeque::new(),
             current_request: None,
