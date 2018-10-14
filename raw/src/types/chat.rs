@@ -13,6 +13,8 @@ pub struct User {
     pub last_name: Option<String>,
     /// User‘s or bot’s username.
     pub username: Option<String>,
+    /// True, if this user is a bot.
+    pub is_bot: bool,
 }
 
 /// This object represents a group.
@@ -114,6 +116,7 @@ impl<'de> Deserialize<'de> for Chat {
                     username: raw.username,
                     first_name: required_field!(first_name),
                     last_name: raw.last_name,
+                    is_bot: false,
                 })
             }
             "group" => {
