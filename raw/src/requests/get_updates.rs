@@ -20,7 +20,7 @@ impl Request for GetUpdates {
 	type Type = JsonRequestType<Self>;
 	type Response = JsonIdResponse<Vec<Update>>;
 
-	fn serialize(&self) -> Result<HttpRequest, Error> {
+	fn serialize(&self) -> Result<HttpRequest, RawTelegramError> {
 		Self::Type::serialize(RequestUrl::method("getUpdates"), self)
 	}
 }

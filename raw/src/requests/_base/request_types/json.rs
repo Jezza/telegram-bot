@@ -1,6 +1,7 @@
 use requests::*;
 use serde::Serialize;
 use serde_json;
+use _base::RawTelegramError;
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Hash, Serialize, Deserialize)]
 pub struct JsonRequestType<Request> {
@@ -11,7 +12,7 @@ impl<Request: Serialize> RequestType for JsonRequestType<Request> {
 	type Options = RequestUrl;
 	type Request = Request;
 
-	fn serialize(url: Self::Options, request: &Self::Request) -> Result<HttpRequest, Error> {
+	fn serialize(url: Self::Options, request: &Self::Request) -> Result<HttpRequest, RawTelegramError> {
 		let body = serde_json::to_vec(&request)?;
 		Ok(HttpRequest {
 			url: url,

@@ -15,7 +15,7 @@ fn main() {
 
 	// Convert stream to the stream with errors in result
 	let stream = api.stream().then(|mb_update| {
-		let res: Result<Result<Update, Error>, ()> = Ok(mb_update);
+		let res: Result<Result<Update, TelegramError>, ()> = Ok(mb_update);
 		res
 	});
 

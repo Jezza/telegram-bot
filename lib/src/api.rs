@@ -1,5 +1,5 @@
 use connector::{Connector, default_connector};
-use errors::Error;
+use errors::TelegramError;
 use future::{NewTelegramFuture, TelegramFuture};
 use futures::Future;
 use futures::future::result;
@@ -39,7 +39,7 @@ impl ConnectorConfig {
 		ConnectorConfig::Specified(connector)
 	}
 
-	pub fn take(self, handle: &Handle) -> Result<Box<Connector>, Error> {
+	pub fn take(self, handle: &Handle) -> Result<Box<Connector>, TelegramError> {
 		match self {
 			ConnectorConfig::Default => default_connector(&handle),
 			ConnectorConfig::Specified(connector) => Ok(connector)
@@ -64,7 +64,7 @@ impl Config {
 	}
 
 	/// Create new `Api` instance.
-	pub fn build<H: Borrow<Handle>>(self, handle: H) -> Result<Api, Error> {
+	pub fn build<H: Borrow<Handle>>(self, handle: H) -> Result<Api, TelegramError> {
 		let handle = handle.borrow().clone();
 		Ok(Api {
 			inner: Rc::new(ApiInner {
@@ -205,7 +205,9 @@ impl Api {
 		&self, request: Req, duration: Duration)
 		-> TelegramFuture<Option<<Req::Response as ResponseType>::Type>> {
 		let timeout_future = result(Timeout::new(duration, &self.inner.handle))
-			.flatten().map_err(From::from).map(|()| None);
+			.flatten()
+			.map_err(From::from)
+			.map(|()| None);
 		let send_future = self.send(request).map(|resp| Some(resp));
 
 		let future = timeout_future.select(send_future)

@@ -1,6 +1,5 @@
 //! Connector with hyper backend.
 
-use errors::Error;
 use future::{NewTelegramFuture, TelegramFuture};
 use futures::{Future, Stream};
 use futures::future::result;
@@ -13,6 +12,7 @@ use std::fmt;
 use std::rc::Rc;
 use std::str::FromStr;
 use super::_base::Connector;
+use errors::TelegramError;
 use telegram_bot_raw::{Body as TelegramBody, HttpRequest, HttpResponse, Method as TelegramMethod};
 use tokio_core::reactor::Handle;
 
@@ -22,8 +22,8 @@ pub struct HyperConnector<C> {
 }
 
 impl<C> fmt::Debug for HyperConnector<C> {
-	fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-		"hyper connector".fmt(formatter)
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		f.write_str("hyper connector")
 	}
 }
 
@@ -37,7 +37,8 @@ impl<C> HyperConnector<C> {
 
 impl<C: Connect> Connector for HyperConnector<C> {
 	fn request(&self, token: &str, req: HttpRequest) -> TelegramFuture<HttpResponse> {
-		let uri = result(Uri::from_str(&req.url.url(token))).map_err(From::from);
+		let uri = result(Uri::from_str(&req.url.url(token)))
+			.map_err(From::from);
 
 		let client = self.inner.clone();
 		let request = uri.and_then(move |uri| {
@@ -61,7 +62,7 @@ impl<C: Connect> Connector for HyperConnector<C> {
 
 		let future = request.and_then(move |response| {
 			response.body().map_err(From::from)
-					.fold(vec![], |mut result, chunk| -> Result<Vec<u8>, Error> {
+					.fold(vec![], |mut result, chunk| -> Result<Vec<u8>, TelegramError> {
 						result.extend_from_slice(&chunk);
 						Ok(result)
 					})
@@ -78,7 +79,7 @@ impl<C: Connect> Connector for HyperConnector<C> {
 }
 
 /// Returns default hyper connector. Uses one resolve thread and `HttpsConnector`.
-pub fn default_connector(handle: &Handle) -> Result<Box<Connector>, Error> {
+pub fn default_connector(handle: &Handle) -> Result<Box<Connector>, TelegramError> {
 	let connector = HttpsConnector::new(1, handle).map_err(|err| {
 		::std::io::Error::new(::std::io::ErrorKind::Other, format!("tls error: {}", err))
 	})?;

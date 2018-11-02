@@ -1,5 +1,5 @@
 pub use self::_base::*;
-pub use self::errors::{Error, ErrorKind};
+pub use self::errors::RawTelegramError;
 pub use self::http::{Body, RequestUrl};
 pub use self::http::{HttpRequest, HttpResponse, Method};
 pub use self::request_types::*;

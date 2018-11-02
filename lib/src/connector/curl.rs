@@ -1,8 +1,8 @@
 //! Connector with tokio-curl backend.
 
-use antidote::Mutex;
+use parking_lot::Mutex;
 use curl::easy::{Easy, List};
-use errors::Error;
+use errors::TelegramError;
 use future::{NewTelegramFuture, TelegramFuture};
 use futures::Future;
 use futures::future::result;
@@ -21,7 +21,7 @@ pub struct CurlConnector {
 
 impl fmt::Debug for CurlConnector {
 	fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-		"curl connector".fmt(formatter)
+		formatter.write_str("curl connector")
 	}
 }
 
@@ -32,7 +32,7 @@ impl CurlConnector {
 		}
 	}
 
-	fn create_request(&self, token: &str, request: HttpRequest) -> Result<(Easy, Arc<Mutex<Vec<u8>>>), Error> {
+	fn create_request(&self, token: &str, request: HttpRequest) -> Result<(Easy, Arc<Mutex<Vec<u8>>>), TelegramError> {
 		let mut handle = Easy::new();
 
 		let url = request.url.url(token);
@@ -91,7 +91,7 @@ impl Connector for CurlConnector {
 }
 
 /// Returns default curl connector.
-pub fn default_connector(handle: &Handle) -> Result<Box<Connector>, Error> {
+pub fn default_connector(handle: &Handle) -> Result<Box<Connector>, TelegramError> {
 	let connector = CurlConnector::new(handle);
 	Ok(Box::new(connector))
 }

@@ -1,5 +1,5 @@
 use api::Api;
-use errors::Error;
+use errors::TelegramError;
 use future::{NewTelegramFuture, TelegramFuture};
 use futures::{Async, Future, Poll, Stream};
 use futures::future;
@@ -29,7 +29,7 @@ pub struct UpdatesStream {
 
 impl Stream for UpdatesStream {
 	type Item = Update;
-	type Error = Error;
+	type Error = TelegramError;
 
 	fn poll(&mut self) -> Poll<Option<Self::Item>, Self::Error> {
 		if let Some(value) = self.buffer.pop_front() {

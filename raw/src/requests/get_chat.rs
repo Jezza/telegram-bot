@@ -12,7 +12,7 @@ impl Request for GetChat {
 	type Type = JsonRequestType<Self>;
 	type Response = JsonIdResponse<Chat>;
 
-	fn serialize(&self) -> Result<HttpRequest, Error> {
+	fn serialize(&self) -> Result<HttpRequest, RawTelegramError> {
 		Self::Type::serialize(RequestUrl::method("getChat"), self)
 	}
 }

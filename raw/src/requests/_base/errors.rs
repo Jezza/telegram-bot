@@ -1,16 +1,35 @@
-use types::*;
+use types::ResponseParameters;
 
-error_chain! {
-    foreign_links {
-        Json(::serde_json::Error);
-    }
+use ::serde_json::Error as SerdeErr;
 
-    errors {
-        EmptyBody
-        TelegramError {
-            description: String,
-            parameters: Option<ResponseParameters>
-        }
-        DetachedError(err: String)
-    }
+#[derive(Debug, Fail)]
+pub enum RawTelegramError {
+	#[fail(display = "Detached Error: {}", err)]
+	DetachedError {
+		err: String
+	},
+
+	#[fail(display = "Empty Body")]
+	EmptyBody {
+	},
+
+	#[fail(display = "Telegram Error: {} => {:?}", description, parameters)]
+	TelegramError {
+		description: String,
+		parameters: Option<ResponseParameters>,
+	},
+
+	#[fail(display = "Json Error")]
+	JsonError {
+		#[fail(cause)]
+		cause: SerdeErr
+	}
+}
+
+impl From<SerdeErr> for RawTelegramError {
+	fn from(e: SerdeErr) -> Self {
+		RawTelegramError::JsonError {
+			cause: e
+		}
+	}
 }

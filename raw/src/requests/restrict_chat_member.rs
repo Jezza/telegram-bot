@@ -21,7 +21,7 @@ impl Request for RestrictChatMember {
 	type Type = JsonRequestType<Self>;
 	type Response = JsonTrueToUnitResponse;
 
-	fn serialize(&self) -> Result<HttpRequest, Error> {
+	fn serialize(&self) -> Result<HttpRequest, RawTelegramError> {
 		Self::Type::serialize(RequestUrl::method("restrictChatMember"), self)
 	}
 }

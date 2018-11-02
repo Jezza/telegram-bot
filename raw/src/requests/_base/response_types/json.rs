@@ -2,6 +2,7 @@ use requests::*;
 use serde::de::DeserializeOwned;
 use serde_json;
 use types::*;
+use _base::RawTelegramError;
 
 pub trait JsonResponse {
 	type Raw;
@@ -37,7 +38,7 @@ impl JsonResponse for JsonTrueToUnitResponse {
 impl<Resp: JsonResponse> ResponseType for Resp where <Resp as JsonResponse>::Raw: DeserializeOwned {
 	type Type = <Resp as JsonResponse>::Type;
 
-	fn deserialize(resp: HttpResponse) -> Result<Self::Type, Error> {
+	fn deserialize(resp: HttpResponse) -> Result<Self::Type, RawTelegramError> {
 		if let Some(body) = resp.body.as_ref() {
 			let raw = serde_json::from_slice(body)?;
 			match raw {
@@ -45,14 +46,14 @@ impl<Resp: JsonResponse> ResponseType for Resp where <Resp as JsonResponse>::Raw
 					Ok(<Self as JsonResponse>::map(result))
 				}
 				ResponseWrapper::Error { description, parameters } => {
-					Err(ErrorKind::TelegramError {
-						description: description,
-						parameters: parameters,
+					Err(RawTelegramError::TelegramError {
+						description,
+						parameters,
 					}.into())
 				}
 			}
 		} else {
-			Err(ErrorKind::EmptyBody.into())
+			Err(RawTelegramError::EmptyBody {})
 		}
 	}
 }

@@ -16,7 +16,6 @@ pub use telegram_bot_raw::{InlineKeyboardButton, InlineKeyboardButtonKind, Inlin
 pub use telegram_bot_raw::{ForceReply, ReplyKeyboardRemove};
 pub use telegram_bot_raw::{ChatMember, ChatMemberStatus};
 pub use telegram_bot_raw::ChatAction;
-pub use telegram_bot_raw::ChatMember;
 pub use telegram_bot_raw::ParseMode;
 
 pub mod requests;
