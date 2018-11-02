@@ -29,29 +29,15 @@ impl<'de> Deserialize<'de> for CallbackQuery {
 	{
 		let raw: RawCallback = Deserialize::deserialize(deserializer)?;
 
-		let id = raw.id;
-		let from = raw.from.clone();
-		let message = raw.message.clone();
-		let inline_message_id = raw.inline_message_id;
-		let chat_instance = raw.chat_instance;
-		let data = raw.data;
-		let game_short_name = raw.game_short_name;
-
-		let make_callback = || {
-			Ok(
-				CallbackQuery {
-					id: id.into(),
-					from,
-					message,
-					inline_message_id,
-					chat_instance,
-					data,
-					game_short_name,
-				}
-			)
-		};
-
-		make_callback()
+		Ok(CallbackQuery {
+			id: raw.id,
+			from: raw.from,
+			message: raw.message,
+			inline_message_id: raw.inline_message_id,
+			chat_instance: raw.chat_instance,
+			data: raw.data,
+			game_short_name: raw.game_short_name,
+		})
 	}
 }
 

@@ -4,14 +4,11 @@ use ::serde_json::Error as SerdeErr;
 
 #[derive(Debug, Fail)]
 pub enum RawTelegramError {
-	#[fail(display = "Detached Error: {}", err)]
-	DetachedError {
-		err: String
-	},
+	#[fail(display = "Detached Error: {}", _0)]
+	DetachedError(String),
 
 	#[fail(display = "Empty Body")]
-	EmptyBody {
-	},
+	EmptyBody,
 
 	#[fail(display = "Telegram Error: {} => {:?}", description, parameters)]
 	TelegramError {

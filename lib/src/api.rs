@@ -70,7 +70,7 @@ impl Config {
 			inner: Rc::new(ApiInner {
 				token: self.token,
 				connector: self.connector.take(&handle)?,
-				handle: handle,
+				handle,
 			}),
 		})
 	}
