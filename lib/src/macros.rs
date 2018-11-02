@@ -123,105 +123,105 @@ macro_rules! reply_markup {
 
 #[cfg(test)]
 mod tests {
-    use telegram_bot_raw::*;
+	use telegram_bot_raw::*;
 
-    #[test]
-    fn test_simple() {
-        let mut remove_keyboard = ReplyKeyboardRemove::new();
-        assert_eq!(remove_keyboard, reply_markup!(remove_keyboard));
+	#[test]
+	fn test_simple() {
+		let mut remove_keyboard = ReplyKeyboardRemove::new();
+		assert_eq!(remove_keyboard, reply_markup!(remove_keyboard));
 
-        remove_keyboard.selective();
-        assert_eq!(remove_keyboard, reply_markup!(remove_keyboard, selective));
+		remove_keyboard.selective();
+		assert_eq!(remove_keyboard, reply_markup!(remove_keyboard, selective));
 
-        let mut force_reply = ForceReply::new();
-        assert_eq!(force_reply, reply_markup!(force_reply));
+		let mut force_reply = ForceReply::new();
+		assert_eq!(force_reply, reply_markup!(force_reply));
 
-        force_reply.selective();
-        assert_eq!(force_reply, reply_markup!(force_reply, selective));
-    }
+		force_reply.selective();
+		assert_eq!(force_reply, reply_markup!(force_reply, selective));
+	}
 
-    #[test]
-    fn test_reply_keyboard() {
-        let mut keyboard = ReplyKeyboardMarkup::new();
-        assert_eq!(keyboard, reply_markup!(reply_keyboard,));
+	#[test]
+	fn test_reply_keyboard() {
+		let mut keyboard = ReplyKeyboardMarkup::new();
+		assert_eq!(keyboard, reply_markup!(reply_keyboard,));
 
-        keyboard.add_empty_row();
-        assert_eq!(keyboard, reply_markup!(reply_keyboard, []));
+		keyboard.add_empty_row();
+		assert_eq!(keyboard, reply_markup!(reply_keyboard, []));
 
-        {
-            let row = keyboard.add_empty_row();
-            row.push(KeyboardButton::new("foo"));
-            row.push(KeyboardButton::new("bar"));
-        }
-        assert_eq!(keyboard, reply_markup!(reply_keyboard, [], ["foo", "bar"]));
+		{
+			let row = keyboard.add_empty_row();
+			row.push(KeyboardButton::new("foo"));
+			row.push(KeyboardButton::new("bar"));
+		}
+		assert_eq!(keyboard, reply_markup!(reply_keyboard, [], ["foo", "bar"]));
 
-        {
-            let row = keyboard.add_empty_row();
-            row.push(KeyboardButton::new("baz"));
-        }
-        assert_eq!(keyboard, reply_markup!(reply_keyboard, [], ["foo", "bar"], ["baz"]));
+		{
+			let row = keyboard.add_empty_row();
+			row.push(KeyboardButton::new("baz"));
+		}
+		assert_eq!(keyboard, reply_markup!(reply_keyboard, [], ["foo", "bar"], ["baz"]));
 
-        {
-            let row = keyboard.add_empty_row();
+		{
+			let row = keyboard.add_empty_row();
 
-            let mut contact_button = KeyboardButton::new("contact");
-            contact_button.request_contact();
-            row.push(contact_button);
+			let mut contact_button = KeyboardButton::new("contact");
+			contact_button.request_contact();
+			row.push(contact_button);
 
-            let mut location_button = KeyboardButton::new("location");
-            location_button.request_location();
-            row.push(location_button)
-        }
-        assert_eq!(keyboard, reply_markup!(
+			let mut location_button = KeyboardButton::new("location");
+			location_button.request_location();
+			row.push(location_button)
+		}
+		assert_eq!(keyboard, reply_markup!(
             reply_keyboard, [], ["foo", "bar"], ["baz"],
             ["contact" contact, "location" location]
         ));
 
-        {
-            let row = keyboard.add_empty_row();
-            row.push(KeyboardButton::new("spam"));
-        }
-        assert_eq!(keyboard, reply_markup!(
+		{
+			let row = keyboard.add_empty_row();
+			row.push(KeyboardButton::new("spam"));
+		}
+		assert_eq!(keyboard, reply_markup!(
             reply_keyboard, [], ["foo", "bar"], ["baz"],
             ["contact" contact, "location" location],
             ["spam"]
         ));
 
-        keyboard.selective();
-        assert_eq!(keyboard, reply_markup!(
+		keyboard.selective();
+		assert_eq!(keyboard, reply_markup!(
             reply_keyboard, selective, [], ["foo", "bar"], ["baz"],
             ["contact" contact, "location" location],
             ["spam"]
         ));
 
-        keyboard.resize_keyboard();
-        assert_eq!(keyboard, reply_markup!(
+		keyboard.resize_keyboard();
+		assert_eq!(keyboard, reply_markup!(
             reply_keyboard, resize, selective, [], ["foo", "bar"], ["baz"],
             ["contact" contact, "location" location],
             ["spam"]
         ));
 
-        keyboard.one_time_keyboard();
-        assert_eq!(keyboard, reply_markup!(
+		keyboard.one_time_keyboard();
+		assert_eq!(keyboard, reply_markup!(
             reply_keyboard, resize, selective, one_time, [], ["foo", "bar"], ["baz"],
             ["contact" contact, "location" location],
             ["spam"]
         ));
-    }
+	}
 
-    #[test]
-    fn test_inline_keyboard() {
-        let mut markup = InlineKeyboardMarkup::new();
-        assert_eq!(markup, reply_markup!(inline_keyboard,));
+	#[test]
+	fn test_inline_keyboard() {
+		let mut markup = InlineKeyboardMarkup::new();
+		assert_eq!(markup, reply_markup!(inline_keyboard,));
 
-        markup.add_empty_row();
-        assert_eq!(markup, reply_markup!(inline_keyboard, []));
+		markup.add_empty_row();
+		assert_eq!(markup, reply_markup!(inline_keyboard, []));
 
-        {
-            let row = markup.add_empty_row();
-            row.push(InlineKeyboardButton::callback("foo", "bar"));
-            row.push(InlineKeyboardButton::callback("baz", "quux"));
-        }
-        assert_eq!(markup, reply_markup!(inline_keyboard, [], ["foo" callback "bar", "baz" callback "quux"]));
-    }
+		{
+			let row = markup.add_empty_row();
+			row.push(InlineKeyboardButton::callback("foo", "bar"));
+			row.push(InlineKeyboardButton::callback("baz", "quux"));
+		}
+		assert_eq!(markup, reply_markup!(inline_keyboard, [], ["foo" callback "bar", "baz" callback "quux"]));
+	}
 }

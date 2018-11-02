@@ -1,8 +1,7 @@
-use std::fmt;
-
 use serde::de;
+use serde::de::{Deserialize, Deserializer, Unexpected, Visitor};
 use serde::ser::{Serialize, Serializer};
-use serde::de::{Deserialize, Deserializer, Visitor, Unexpected};
+use std::fmt;
 
 /// The Telegram `Integer`, currently i64.
 pub type Integer = i64;
@@ -14,36 +13,36 @@ pub type Float = f32;
 pub struct True;
 
 impl<'de> Deserialize<'de> for True {
-    fn deserialize<D>(deserializer: D) -> Result<True, D::Error>
-        where D: Deserializer<'de>
-    {
-        struct TrueVisitor;
+	fn deserialize<D>(deserializer: D) -> Result<True, D::Error>
+					  where D: Deserializer<'de>
+	{
+		struct TrueVisitor;
 
-        impl<'de> Visitor<'de> for TrueVisitor {
-            type Value = True;
+		impl<'de> Visitor<'de> for TrueVisitor {
+			type Value = True;
 
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("true")
-            }
+			fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+				formatter.write_str("true")
+			}
 
-            fn visit_bool<E>(self, value: bool) -> Result<True, E>
-                where E: de::Error
-            {
-                match value {
-                    true => Ok(True),
-                    false => Err(E::invalid_value(Unexpected::Bool(value), &self)),
-                }
-            }
-        }
+			fn visit_bool<E>(self, value: bool) -> Result<True, E>
+							 where E: de::Error
+			{
+				match value {
+					true => Ok(True),
+					false => Err(E::invalid_value(Unexpected::Bool(value), &self)),
+				}
+			}
+		}
 
-        deserializer.deserialize_bool(TrueVisitor)
-    }
+		deserializer.deserialize_bool(TrueVisitor)
+	}
 }
 
 impl Serialize for True {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where S: Serializer
-    {
-        serializer.serialize_bool(true)
-    }
+	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+					where S: Serializer
+	{
+		serializer.serialize_bool(true)
+	}
 }

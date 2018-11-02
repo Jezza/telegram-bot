@@ -1,5 +1,5 @@
-use types::*;
 use requests::*;
+use types::*;
 
 // Use this method to delete a message.
 // A message can only be deleted if it was sent less than 48 hours ago.
@@ -12,37 +12,36 @@ use requests::*;
 #[derive(Debug, Clone, PartialEq, PartialOrd, Serialize)]
 #[must_use = "requests do nothing unless sent"]
 pub struct DeleteMessage {
-    chat_id: ChatRef,
-    message_id: MessageId,
+	chat_id: ChatRef,
+	message_id: MessageId,
 }
 
 impl Request for DeleteMessage {
-    type Type = JsonRequestType<Self>;
-    type Response = JsonTrueToUnitResponse;
+	type Type = JsonRequestType<Self>;
+	type Response = JsonTrueToUnitResponse;
 
-    fn serialize(&self) -> Result<HttpRequest, Error> {
-        Self::Type::serialize(RequestUrl::method("deleteMessage"), self)
-    }
+	fn serialize(&self) -> Result<HttpRequest, Error> {
+		Self::Type::serialize(RequestUrl::method("deleteMessage"), self)
+	}
 }
 
 impl DeleteMessage {
-    pub fn new<C, M>(chat: C, message_id: M) -> Self
-        where C: ToChatRef, M: ToMessageId {
-
-        DeleteMessage {
-            chat_id: chat.to_chat_ref(),
-            message_id: message_id.to_message_id(),
-        }
-    }
+	pub fn new<C, M>(chat: C, message_id: M) -> Self
+					 where C: ToChatRef, M: ToMessageId {
+		DeleteMessage {
+			chat_id: chat.to_chat_ref(),
+			message_id: message_id.to_message_id(),
+		}
+	}
 }
 
 /// Delete messages..
 pub trait CanDeleteMessage {
-    fn delete(&self) -> DeleteMessage;
+	fn delete(&self) -> DeleteMessage;
 }
 
 impl<M> CanDeleteMessage for M where M: ToMessageId + ToSourceChat {
-    fn delete(&self) -> DeleteMessage {
-        DeleteMessage::new(self.to_source_chat(), self.to_message_id())
-    }
+	fn delete(&self) -> DeleteMessage {
+		DeleteMessage::new(self.to_source_chat(), self.to_message_id())
+	}
 }
