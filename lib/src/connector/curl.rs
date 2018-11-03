@@ -70,7 +70,6 @@ impl Connector {
 				headers.append(&format!("Content-Type: application/json"))?;
 				handle.http_headers(headers)?;
 			}
-			body => panic!("Unknown body type {:?}", body)
 		}
 
 		let result = Arc::new(Mutex::new(Vec::new()));
