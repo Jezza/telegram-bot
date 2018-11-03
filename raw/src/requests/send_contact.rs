@@ -25,7 +25,7 @@ impl<'p, 'f, 'l> Request for SendContact<'p, 'f, 'l> {
 	type Response = JsonIdResponse<Message>;
 
 	fn serialize(&self) -> Result<HttpRequest, RawTelegramError> {
-		Self::Type::serialize(RequestUrl::method("sendContact"), self)
+		Self::Type::serialize("sendContact", self)
 	}
 }
 

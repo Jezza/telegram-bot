@@ -21,7 +21,7 @@ impl Request for DeleteMessage {
 	type Response = JsonTrueToUnitResponse;
 
 	fn serialize(&self) -> Result<HttpRequest, RawTelegramError> {
-		Self::Type::serialize(RequestUrl::method("deleteMessage"), self)
+		Self::Type::serialize("deleteMessage", self)
 	}
 }
 

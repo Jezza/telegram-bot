@@ -10,7 +10,7 @@ impl RequestType for DetachedRequestType {
 	fn serialize(_options: Self::Options, request: &Self::Request) -> Result<HttpRequest, RawTelegramError> {
 		match request {
 			&Ok(ref req) => Ok(req.clone()),
-			&Err(ref err) => Err(RawTelegramError::DetachedError(err.to_string())),
+			&Err(ref err) => Err(RawTelegramError::Detached(err.to_string())),
 		}
 	}
 }

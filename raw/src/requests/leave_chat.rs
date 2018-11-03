@@ -13,7 +13,7 @@ impl Request for LeaveChat {
 	type Response = JsonTrueToUnitResponse;
 
 	fn serialize(&self) -> Result<HttpRequest, RawTelegramError> {
-		Self::Type::serialize(RequestUrl::method("leaveChat"), self)
+		Self::Type::serialize("leaveChat", self)
 	}
 }
 

@@ -29,7 +29,7 @@ fn main() {
 	let mut core = Core::new().unwrap();
 	let handle = core.handle();
 
-	let api = Api::configure(token).build(core.handle()).unwrap();
+	let api = Api::create(token, core.handle()).unwrap();
 
 	let future = api.stream().for_each(|update| {
 		if let UpdateKind::Message(message) = update.kind {

@@ -20,7 +20,7 @@ impl Request for EditMessageLiveLocation {
 	type Response = JsonIdResponse<Message>;
 
 	fn serialize(&self) -> Result<HttpRequest, RawTelegramError> {
-		Self::Type::serialize(RequestUrl::method("editMessageLiveLocation"), self)
+		Self::Type::serialize("editMessageLiveLocation", self)
 	}
 }
 

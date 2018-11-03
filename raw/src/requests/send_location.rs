@@ -24,7 +24,7 @@ impl Request for SendLocation {
 	type Response = JsonIdResponse<Message>;
 
 	fn serialize(&self) -> Result<HttpRequest, RawTelegramError> {
-		Self::Type::serialize(RequestUrl::method("sendLocation"), self)
+		Self::Type::serialize("sendLocation", self)
 	}
 }
 

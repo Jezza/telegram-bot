@@ -20,7 +20,7 @@ impl Request for PinChatMessage {
 	type Response = JsonTrueToUnitResponse;
 
 	fn serialize(&self) -> Result<HttpRequest, RawTelegramError> {
-		Self::Type::serialize(RequestUrl::method("pinChatMessage"), self)
+		Self::Type::serialize("pinChatMessage", self)
 	}
 }
 

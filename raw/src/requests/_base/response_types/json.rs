@@ -34,7 +34,8 @@ impl JsonResponse for JsonTrueToUnitResponse {
 	}
 }
 
-impl<Resp: JsonResponse> ResponseType for Resp where <Resp as JsonResponse>::Raw: DeserializeOwned {
+impl<Resp: JsonResponse> ResponseType for Resp
+	where <Resp as JsonResponse>::Raw: DeserializeOwned {
 	type Type = Resp::Type;
 
 	fn deserialize(resp: HttpResponse) -> Result<Self::Type, RawTelegramError> {
@@ -44,7 +45,7 @@ impl<Resp: JsonResponse> ResponseType for Resp where <Resp as JsonResponse>::Raw
 					Ok(Self::map(result))
 				}
 				ResponseWrapper::Error { description, parameters } => {
-					Err(RawTelegramError::TelegramError {
+					Err(RawTelegramError::Telegram {
 						description,
 						parameters,
 					})

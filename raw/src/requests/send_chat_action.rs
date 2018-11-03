@@ -38,7 +38,7 @@ impl Request for SendChatAction {
 	type Response = JsonTrueToUnitResponse;
 
 	fn serialize(&self) -> Result<HttpRequest, RawTelegramError> {
-		Self::Type::serialize(RequestUrl::method("sendChatAction"), self)
+		Self::Type::serialize("sendChatAction", self)
 	}
 }
 

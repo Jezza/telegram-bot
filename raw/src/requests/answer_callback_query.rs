@@ -25,7 +25,7 @@ impl<'i, 't> Request for AnswerCallbackQuery<'t> {
 	type Response = JsonTrueToUnitResponse;
 
 	fn serialize(&self) -> Result<HttpRequest, RawTelegramError> {
-		Self::Type::serialize(RequestUrl::method("answerCallbackQuery"), self)
+		Self::Type::serialize("answerCallbackQuery", self)
 	}
 }
 

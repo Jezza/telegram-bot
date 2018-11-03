@@ -17,7 +17,7 @@ impl Request for KickChatMember {
 	type Response = JsonTrueToUnitResponse;
 
 	fn serialize(&self) -> Result<HttpRequest, RawTelegramError> {
-		Self::Type::serialize(RequestUrl::method("kickChatMember"), self)
+		Self::Type::serialize("kickChatMember", self)
 	}
 }
 

@@ -24,7 +24,7 @@ extern crate tokio_curl;
 
 pub use connector::*;
 pub use prelude::*;
-pub use self::api::{Api, Config};
+pub use self::api::Api;
 pub use self::errors::TelegramError;
 pub use self::future::TelegramFuture;
 pub use stream::UpdatesStream;

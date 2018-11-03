@@ -18,7 +18,7 @@ impl Request for ForwardMessage {
 	type Response = JsonIdResponse<Message>;
 
 	fn serialize(&self) -> Result<HttpRequest, RawTelegramError> {
-		Self::Type::serialize(RequestUrl::method("forwardMessage"), self)
+		Self::Type::serialize("forwardMessage", self)
 	}
 }
 

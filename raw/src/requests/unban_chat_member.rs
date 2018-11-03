@@ -16,7 +16,7 @@ impl Request for UnbanChatMember {
 	type Response = JsonTrueToUnitResponse;
 
 	fn serialize(&self) -> Result<HttpRequest, RawTelegramError> {
-		Self::Type::serialize(RequestUrl::method("unbanChatMember"), self)
+		Self::Type::serialize("unbanChatMember", self)
 	}
 }
 

@@ -14,7 +14,7 @@ impl Request for GetChatMember {
 	type Response = JsonIdResponse<ChatMember>;
 
 	fn serialize(&self) -> Result<HttpRequest, RawTelegramError> {
-		Self::Type::serialize(RequestUrl::method("getChatMember"), self)
+		Self::Type::serialize("getChatMember", self)
 	}
 }
 

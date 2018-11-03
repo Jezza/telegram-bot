@@ -27,7 +27,7 @@ impl<'t, 'a, 'f> Request for SendVenue<'t, 'a, 'f> {
 	type Response = JsonIdResponse<Message>;
 
 	fn serialize(&self) -> Result<HttpRequest, RawTelegramError> {
-		Self::Type::serialize(RequestUrl::method("sendVenue"), self)
+		Self::Type::serialize("sendVenue", self)
 	}
 }
 

@@ -12,6 +12,6 @@ impl Request for GetMe {
 	type Response = JsonIdResponse<User>;
 
 	fn serialize(&self) -> Result<HttpRequest, RawTelegramError> {
-		Self::Type::serialize(RequestUrl::method("getMe"), self)
+		Self::Type::serialize("getMe", self)
 	}
 }

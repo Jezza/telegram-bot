@@ -32,7 +32,7 @@ impl<'s, 'c, 'p, 't> Request for SendAudio<'s, 'c, 'p, 't> {
 	type Response = JsonTrueToUnitResponse;
 
 	fn serialize(&self) -> Result<HttpRequest, RawTelegramError> {
-		Self::Type::serialize(RequestUrl::method("sendAudio"), self)
+		Self::Type::serialize("sendAudio", self)
 	}
 }
 

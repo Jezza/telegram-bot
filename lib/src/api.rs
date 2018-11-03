@@ -1,4 +1,4 @@
-use connector::{Connector, default_connector};
+use connector::{Connector, create_connector};
 use errors::TelegramError;
 use future::TelegramFuture;
 use futures::Future;
@@ -22,66 +22,10 @@ struct ApiInner {
 	handle: Handle,
 }
 
-#[derive(Debug)]
-pub enum ConnectorConfig {
-	Default,
-	Specified(Connector),
-}
-
-impl Default for ConnectorConfig {
-	fn default() -> Self {
-		ConnectorConfig::Default
-	}
-}
-
-impl ConnectorConfig {
-	pub fn new(connector: Connector) -> Self {
-		ConnectorConfig::Specified(connector)
-	}
-
-	pub fn take(self, handle: &Handle) -> Result<Connector, TelegramError> {
-		match self {
-			ConnectorConfig::Default => default_connector(&handle),
-			ConnectorConfig::Specified(connector) => Ok(connector)
-		}
-	}
-}
-
-/// Configuration for an `Api`.
-#[derive(Debug)]
-pub struct Config {
-	token: String,
-	connector: ConnectorConfig,
-}
-
-impl Config {
-	/// Set connector type for an `Api`.
-	pub fn connector(self, connector: Connector) -> Config {
-		Config {
-			token: self.token,
-			connector: ConnectorConfig::new(connector),
-		}
-	}
-
-	/// Create new `Api` instance.
-	pub fn build<H: Borrow<Handle>>(self, handle: H) -> Result<Api, TelegramError> {
-		let handle = handle.borrow().clone();
-		Ok(Api {
-			inner: Rc::new(ApiInner {
-				token: self.token,
-				connector: self.connector.take(&handle)?,
-				handle,
-			}),
-		})
-	}
-}
-
 impl Api {
 	/// Start construction of the `Api` instance.
 	///
-	/// # Examples
-	///
-	/// Using default connector.
+	/// # Example
 	///
 	/// ```rust
 	/// # extern crate telegram_bot;
@@ -92,37 +36,18 @@ impl Api {
 	/// # fn main() {
 	/// let core = Core::new().unwrap();
 	/// # let telegram_token = "token";
-	/// let api = Api::configure(telegram_token).build(core.handle()).unwrap();
+	/// let api = Api::create(telegram_token, core.handle()).unwrap();
 	/// # }
 	/// ```
-	///
-	/// Using custom connector.
-	///
-	///
-	/// ```rust
-	/// # extern crate telegram_bot;
-	/// # extern crate tokio_core;
-	/// # #[cfg(feature = "hyper_connector")]
-	/// # fn main() {
-	/// use telegram_bot::Api;
-	/// use telegram_bot::connector::hyper;
-	/// use tokio_core::reactor::Core;
-	///
-	/// let core = Core::new().unwrap();
-	/// # let telegram_token = "token";
-	/// let api = Api::configure(telegram_token)
-	///     .connector(hyper::default_connector(&core.handle()).unwrap())
-	///     .build(core.handle()).unwrap();
-	/// # }
-	///
-	/// # #[cfg(not(feature = "hyper_connector"))]
-	/// # fn main() {}
-	/// ```
-	pub fn configure<T: AsRef<str>>(token: T) -> Config {
-		Config {
-			token: token.as_ref().to_string(),
-			connector: Default::default(),
-		}
+	pub fn create<T: AsRef<str>, H: Borrow<Handle>>(token: T, handle: H) -> Result<Api, TelegramError> {
+		let handle = handle.borrow().clone();
+		Ok(Api {
+			inner: Rc::new(ApiInner {
+				token: token.as_ref().to_string(),
+				connector: create_connector(&handle)?,
+				handle,
+			}),
+		})
 	}
 
 	/// Create a stream which produces updates from the Telegram server.
@@ -240,16 +165,17 @@ impl Api {
 	/// # }
 	/// ```
 	pub fn send<Req: Request>(&self, request: Req) -> impl TelegramFuture<<Req::Response as ResponseType>::Type> {
-		let result = result(request.serialize()
-								   .map_err(From::from));
-
 		let api = self.clone();
 
-		result.and_then(move |request| {
-			let ref token = api.inner.token;
-			api.inner.connector.request(token, request)
-		}).and_then(move |response| {
-			Req::Response::deserialize(response).map_err(From::from)
-		})
+		result(request.serialize()
+					  .map_err(From::from))
+			.and_then(move |request| {
+				let ref token = api.inner.token;
+				api.inner.connector.request(token, request)
+			})
+			.and_then(|response| {
+				Req::Response::deserialize(response)
+					.map_err(From::from)
+			})
 	}
 }

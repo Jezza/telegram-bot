@@ -16,7 +16,7 @@ impl Request for UnpinChatMessage {
 	type Response = JsonTrueToUnitResponse;
 
 	fn serialize(&self) -> Result<HttpRequest, RawTelegramError> {
-		Self::Type::serialize(RequestUrl::method("unpinChatMessage"), self)
+		Self::Type::serialize("unpinChatMessage", self)
 	}
 }
 

@@ -15,7 +15,7 @@ impl Request for GetChatAdministrators {
 	type Response = JsonIdResponse<Vec<ChatMember>>;
 
 	fn serialize(&self) -> Result<HttpRequest, RawTelegramError> {
-		Self::Type::serialize(RequestUrl::method("getChatAdministrators"), self)
+		Self::Type::serialize("getChatAdministrators", self)
 	}
 }
 

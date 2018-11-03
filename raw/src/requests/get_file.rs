@@ -14,7 +14,7 @@ impl<'s> Request for GetFile {
 	type Response = JsonIdResponse<File>;
 
 	fn serialize(&self) -> Result<HttpRequest, RawTelegramError> {
-		Self::Type::serialize(RequestUrl::method("getFile"), self)
+		Self::Type::serialize("getFile", self)
 	}
 }
 

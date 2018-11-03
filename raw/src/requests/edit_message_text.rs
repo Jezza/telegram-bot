@@ -23,7 +23,7 @@ impl<'s> Request for EditMessageText<'s> {
 	type Response = JsonIdResponse<Message>;
 
 	fn serialize(&self) -> Result<HttpRequest, RawTelegramError> {
-		Self::Type::serialize(RequestUrl::method("editMessageText"), self)
+		Self::Type::serialize("editMessageText", self)
 	}
 }
 

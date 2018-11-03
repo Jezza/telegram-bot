@@ -7,16 +7,12 @@ pub struct JsonRequestType<Request> {
 	phantom: ::std::marker::PhantomData<Request>,
 }
 
-impl<Request: Serialize> RequestType for JsonRequestType<Request> {
-	type Options = RequestUrl;
-	type Request = Request;
+impl<R: Serialize> RequestType for JsonRequestType<R> {
+	type Options = &'static str;
+	type Request = R;
 
 	fn serialize(url: Self::Options, request: &Self::Request) -> Result<HttpRequest, RawTelegramError> {
 		let body = serde_json::to_vec(&request)?;
-		Ok(HttpRequest {
-			url,
-			method: Method::Post,
-			body: Body::Json(body),
-		})
+		Ok(HttpRequest::new(url, body))
 	}
 }

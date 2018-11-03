@@ -12,7 +12,7 @@ use hyper_tls::HttpsConnector;
 use std::fmt;
 use std::str::FromStr;
 use std::sync::Arc;
-use telegram_bot_raw::{Body as TelegramBody, HttpRequest, HttpResponse};
+use telegram_bot_raw::{HttpRequest, HttpResponse};
 use tokio_core::reactor::Handle;
 
 type HClient = Client<HttpsConnector<HttpConnector<GaiResolver>>>;
@@ -37,18 +37,15 @@ impl Connector {
 
 	pub fn request(&self, token: &str, req: HttpRequest) -> impl TelegramFuture<HttpResponse> {
 		let client = self.inner.clone();
-		result(Uri::from_str(&req.url.url(token)))
+		result(Uri::from_str(&req.url(token)))
 			.map_err(From::from)
 			.and_then(move |uri| {
-				match req.body {
-					TelegramBody::Empty => client.get(uri),
-					TelegramBody::Json(body) => {
-						client.request(Request::post(uri)
-							.header(header::CONTENT_TYPE, "application/json")
-							.body(Body::from(body))
-							.unwrap())
-					}
-				}.map_err(From::from)
+//				client.get(uri)
+				client.request(Request::post(uri)
+					.header(header::CONTENT_TYPE, "application/json")
+					.body(Body::from(req.into_body()))
+					.unwrap())
+					.map_err(From::from)
 			})
 			.and_then(|response| {
 				response.into_body()
@@ -64,7 +61,7 @@ impl Connector {
 }
 
 /// Returns default hyper connector. Uses one resolve thread and `HttpsConnector`.
-pub fn default_connector(_handle: &Handle) -> Result<Connector, TelegramError> {
+pub fn create_connector(_handle: &Handle) -> Result<Connector, TelegramError> {
 	let connector = HttpsConnector::new(1)
 		.map_err(|err| {
 			::std::io::Error::new(::std::io::ErrorKind::Other, format!("tls error: {}", err))

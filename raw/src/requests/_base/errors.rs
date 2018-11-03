@@ -5,27 +5,27 @@ use ::serde_json::Error as SerdeErr;
 #[derive(Debug, Fail)]
 pub enum RawTelegramError {
 	#[fail(display = "Detached Error: {}", _0)]
-	DetachedError(String),
+	Detached(String),
 
 	#[fail(display = "Empty Body")]
 	EmptyBody,
 
 	#[fail(display = "Telegram Error: {} => {:?}", description, parameters)]
-	TelegramError {
+	Telegram {
 		description: String,
 		parameters: Option<ResponseParameters>,
 	},
 
 	#[fail(display = "Json Error")]
-	JsonError {
+	Json {
 		#[fail(cause)]
 		cause: SerdeErr
-	}
+	},
 }
 
 impl From<SerdeErr> for RawTelegramError {
 	fn from(e: SerdeErr) -> Self {
-		RawTelegramError::JsonError {
+		RawTelegramError::Json {
 			cause: e
 		}
 	}

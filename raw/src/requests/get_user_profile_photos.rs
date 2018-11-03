@@ -15,7 +15,7 @@ impl Request for GetUserProfilePhotos {
 	type Response = JsonIdResponse<UserProfilePhotos>;
 
 	fn serialize(&self) -> Result<HttpRequest, RawTelegramError> {
-		Self::Type::serialize(RequestUrl::method("getUserProfilePhotos"), self)
+		Self::Type::serialize("getUserProfilePhotos", self)
 	}
 }
 

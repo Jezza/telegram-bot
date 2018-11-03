@@ -13,7 +13,7 @@ impl Request for GetChatMembersCount {
 	type Response = JsonIdResponse<Integer>;
 
 	fn serialize(&self) -> Result<HttpRequest, RawTelegramError> {
-		Self::Type::serialize(RequestUrl::method("getChatMembersCount"), self)
+		Self::Type::serialize("getChatMembersCount", self)
 	}
 }
 

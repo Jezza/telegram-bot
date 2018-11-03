@@ -11,7 +11,7 @@ fn main() {
 	let mut core = Core::new().unwrap();
 
 	let token = env::var("TELEGRAM_BOT_TOKEN").unwrap();
-	let api = Api::configure(token).build(core.handle()).unwrap();
+	let api = Api::create(token, core.handle()).unwrap();
 
 	// Fetch new updates via long poll method
 	let future = api.stream().for_each(|update| {

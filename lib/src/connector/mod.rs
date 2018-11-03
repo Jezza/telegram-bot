@@ -38,7 +38,7 @@ mod defaults {
 		}
 	}
 
-	pub fn default_connector(_handle: &Handle) -> Result<Connector, TelegramError> {
+	pub fn create_connector(_handle: &Handle) -> Result<Connector, TelegramError> {
 		panic!("No connector specified.")
 	}
 }
