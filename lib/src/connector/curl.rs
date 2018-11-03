@@ -6,30 +6,21 @@ use future::TelegramFuture;
 use futures::Future;
 use futures::future::result;
 use parking_lot::Mutex;
-use std::fmt;
 use std::rc::Rc;
 use std::sync::Arc;
 use telegram_bot_raw::{HttpRequest, HttpResponse};
 use tokio_core::reactor::Handle;
 use tokio_curl::Session;
 
-pub type Connector = CurlConnector;
-
 /// This connector uses `tokio-curl` backend.
-pub struct CurlConnector {
+pub struct Connector {
 	inner: Rc<Session>
 }
 
-impl fmt::Debug for CurlConnector {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		f.write_str("CurlConnector")
-	}
-}
-
-impl CurlConnector {
-	fn new(handle: &Handle) -> Self {
-		CurlConnector {
-			inner: Rc::new(Session::new(handle.clone()))
+impl Connector {
+	fn new(session: Session) -> Self {
+		Connector {
+			inner: Rc::new(session)
 		}
 	}
 
@@ -80,7 +71,7 @@ impl CurlConnector {
 	}
 }
 
-/// Returns default curl connector.
-pub fn create_connector(handle: &Handle) -> Result<CurlConnector, TelegramError> {
-	Ok(CurlConnector::new(handle))
+/// Creates a curl connector.
+pub fn create_connector(handle: &Handle) -> Result<Connector, TelegramError> {
+	Ok(Connector::new(Session::new(handle.clone())))
 }

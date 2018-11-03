@@ -9,9 +9,8 @@ use hyper::client::{Client, HttpConnector};
 use hyper::client::connect::dns::GaiResolver;
 use hyper::header;
 use hyper_tls::HttpsConnector;
-use std::fmt;
+use std::rc::Rc;
 use std::str::FromStr;
-use std::sync::Arc;
 use telegram_bot_raw::{HttpRequest, HttpResponse};
 use tokio_core::reactor::Handle;
 
@@ -19,19 +18,13 @@ type HClient = Client<HttpsConnector<HttpConnector<GaiResolver>>>;
 
 /// This connector uses `hyper` backend.
 pub struct Connector {
-	inner: Arc<HClient>
-}
-
-impl fmt::Debug for Connector {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		f.write_str("hyper connector")
-	}
+	inner: Rc<HClient>
 }
 
 impl Connector {
 	fn new(client: HClient) -> Self {
 		Connector {
-			inner: Arc::new(client)
+			inner: Rc::new(client)
 		}
 	}
 
@@ -45,7 +38,7 @@ impl Connector {
 					.header(header::CONTENT_TYPE, "application/json")
 					.body(Body::from(req.into_body()))
 					.unwrap())
-					.map_err(From::from)
+					  .map_err(From::from)
 			})
 			.and_then(|response| {
 				response.into_body()
@@ -60,12 +53,10 @@ impl Connector {
 	}
 }
 
-/// Returns default hyper connector. Uses one resolve thread and `HttpsConnector`.
+/// Returns a hyper connector. Uses one resolve thread and `HttpsConnector`.
 pub fn create_connector(_handle: &Handle) -> Result<Connector, TelegramError> {
 	let connector = HttpsConnector::new(1)
-		.map_err(|err| {
-			::std::io::Error::new(::std::io::ErrorKind::Other, format!("tls error: {}", err))
-		})?;
+		.map_err(TelegramError::from)?;
 	let client: HClient = Client::builder()
 		.build(connector);
 	Ok(Connector::new(client))

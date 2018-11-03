@@ -14,6 +14,8 @@ use hyper::Error as HyperError;
 use hyper::http::Error as HyperHttpError;
 #[cfg(feature = "hyper_connector")]
 use hyper::http::uri::InvalidUri as HyperUriError;
+#[cfg(feature = "hyper_connector")]
+use hyper_tls::Error as HyperTlsError;
 
 #[derive(Debug, Fail)]
 pub enum TelegramError {
@@ -46,6 +48,13 @@ pub enum TelegramError {
 	HyperHttp {
 		#[fail(cause)]
 		cause: HyperHttpError
+	},
+
+	#[cfg(feature = "hyper_connector")]
+	#[fail(display = "Hyper TLS Error")]
+	HyperTls {
+		#[fail(cause)]
+		cause: HyperTlsError
 	},
 
 	#[cfg(feature = "curl_connector")]
@@ -94,6 +103,15 @@ impl From<HyperUriError> for TelegramError {
 impl From<HyperHttpError> for TelegramError {
 	fn from(e: HyperHttpError) -> Self {
 		TelegramError::HyperHttp {
+			cause: e
+		}
+	}
+}
+
+#[cfg(feature = "hyper_connector")]
+impl From<HyperTlsError> for TelegramError {
+	fn from(e: HyperTlsError) -> Self {
+		TelegramError::HyperTls {
 			cause: e
 		}
 	}

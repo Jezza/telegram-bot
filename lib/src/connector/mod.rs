@@ -26,12 +26,6 @@ mod defaults {
 
 	pub struct Connector;
 
-	impl Debug for Connector {
-		fn fmt(&self, f: &mut Formatter) -> FResult {
-			f.write_str("curl connector")
-		}
-	}
-
 	impl Connector {
 		pub fn request(&self, _token: &str, _req: HttpRequest) -> impl TelegramFuture<HttpResponse> {
 			err(TelegramError::__Unreachable)

@@ -41,10 +41,12 @@ impl Api {
 	/// ```
 	pub fn create<T: AsRef<str>, H: Borrow<Handle>>(token: T, handle: H) -> Result<Api, TelegramError> {
 		let handle = handle.borrow().clone();
+		// Connector API
+		let connector = create_connector(&handle)?;
 		Ok(Api {
 			inner: Rc::new(ApiInner {
 				token: token.as_ref().to_string(),
-				connector: create_connector(&handle)?,
+				connector: connector,
 				handle,
 			}),
 		})
@@ -171,6 +173,7 @@ impl Api {
 					  .map_err(From::from))
 			.and_then(move |request| {
 				let ref token = api.inner.token;
+				// Connector API
 				api.inner.connector.request(token, request)
 			})
 			.and_then(|response| {
