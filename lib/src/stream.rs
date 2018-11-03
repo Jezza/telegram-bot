@@ -1,6 +1,5 @@
 use api::Api;
 use errors::TelegramError;
-use future::{NewTelegramFuture, TelegramFuture};
 use futures::{Async, Future, Poll, Stream};
 use futures::future;
 use std::cmp::max;
@@ -21,7 +20,8 @@ pub struct UpdatesStream {
 	handle: Handle,
 	last_update: Integer,
 	buffer: VecDeque<Update>,
-	current_request: Option<TelegramFuture<Option<Vec<Update>>>>,
+	current_request: Option<Box<dyn Future<Item=Option<Vec<Update>>, Error=TelegramError>>>,
+//	current_request: Option<Box<dyn TelegramFuture<Option<Vec<Update>>>>>,
 	timeout: Duration,
 	limit: Integer,
 	error_delay: Duration,
@@ -57,25 +57,27 @@ impl Stream for UpdatesStream {
 
 		match result {
 			Err(err) => {
-				let timeout_future = future::result(Timeout::new(self.error_delay, &self.handle));
+				let timeout_future = future::result(Timeout::new(self.error_delay, &self.handle))
+					.map_err(From::from)
+					.and_then(|timeout| {
+						timeout.map_err(From::from)
+							   .map(|()| None)
+					});
 
-				let timeout_future = timeout_future.map_err(From::from).and_then(|timeout| {
-					timeout.map_err(From::from).map(|()| None)
-				});
-
-				self.current_request = Some(TelegramFuture::new(Box::new(timeout_future)));
+				self.current_request = Some(Box::new(timeout_future));
 				return Err(err);
 			}
 			Ok(false) => {
+				let mut updates = GetUpdates::new();
+				updates.offset(self.last_update + 1)
+					   .timeout(self.timeout.as_secs() as Integer)
+					   .limit(self.limit);
+
 				let timeout = self.timeout + Duration::from_secs(1);
 
-				let request = self.api.send_timeout(GetUpdates::new()
-														.offset(self.last_update + 1)
-														.timeout(self.timeout.as_secs() as Integer)
-														.limit(self.limit)
-													, timeout);
+				let request = self.api.send_timeout(updates, timeout);
 
-				self.current_request = Some(request);
+				self.current_request = Some(Box::new(request));
 				self.poll()
 			}
 			Ok(true) => {
@@ -93,8 +95,8 @@ pub trait NewUpdatesStream {
 impl NewUpdatesStream for UpdatesStream {
 	fn new(api: Api, handle: Handle) -> Self {
 		UpdatesStream {
-			api: api,
-			handle: handle,
+			api,
+			handle,
 			last_update: 0,
 			buffer: VecDeque::new(),
 			current_request: None,

@@ -1,88 +1,75 @@
 //! Connector with hyper backend.
 
-use future::{NewTelegramFuture, TelegramFuture};
+use errors::TelegramError;
+use future::TelegramFuture;
 use futures::{Future, Stream};
 use futures::future::result;
-use hyper;
-use hyper::{Method, Uri};
-use hyper::client::{Client, Connect};
-use hyper::header::ContentType;
+use hyper::{Body, Request, Uri};
+use hyper::client::{Client, HttpConnector};
+use hyper::client::connect::dns::GaiResolver;
+use hyper::header;
 use hyper_tls::HttpsConnector;
 use std::fmt;
-use std::rc::Rc;
 use std::str::FromStr;
-use super::_base::Connector;
-use errors::TelegramError;
-use telegram_bot_raw::{Body as TelegramBody, HttpRequest, HttpResponse, Method as TelegramMethod};
+use std::sync::Arc;
+use telegram_bot_raw::{Body as TelegramBody, HttpRequest, HttpResponse};
 use tokio_core::reactor::Handle;
 
+type HClient = Client<HttpsConnector<HttpConnector<GaiResolver>>>;
+
 /// This connector uses `hyper` backend.
-pub struct HyperConnector<C> {
-	inner: Rc<Client<C>>
+pub struct Connector {
+	inner: Arc<HClient>
 }
 
-impl<C> fmt::Debug for HyperConnector<C> {
+impl fmt::Debug for Connector {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		f.write_str("hyper connector")
 	}
 }
 
-impl<C> HyperConnector<C> {
-	pub fn new(client: Client<C>) -> Self {
-		HyperConnector {
-			inner: Rc::new(client)
+impl Connector {
+	fn new(client: HClient) -> Self {
+		Connector {
+			inner: Arc::new(client)
 		}
 	}
-}
 
-impl<C: Connect> Connector for HyperConnector<C> {
-	fn request(&self, token: &str, req: HttpRequest) -> TelegramFuture<HttpResponse> {
-		let uri = result(Uri::from_str(&req.url.url(token)))
-			.map_err(From::from);
-
+	pub fn request(&self, token: &str, req: HttpRequest) -> impl TelegramFuture<HttpResponse> {
 		let client = self.inner.clone();
-		let request = uri.and_then(move |uri| {
-			let method = match req.method {
-				TelegramMethod::Get => Method::Get,
-				TelegramMethod::Post => Method::Post,
-			};
-			let mut http_request = hyper::client::Request::new(method, uri);
-
-			match req.body {
-				TelegramBody::Empty => (),
-				TelegramBody::Json(body) => {
-					http_request.set_body(body);
-					http_request.headers_mut().set(ContentType::json());
-				}
-				body => panic!("Unknown body type {:?}", body)
-			}
-
-			client.request(http_request).map_err(From::from)
-		});
-
-		let future = request.and_then(move |response| {
-			response.body().map_err(From::from)
-					.fold(vec![], |mut result, chunk| -> Result<Vec<u8>, TelegramError> {
-						result.extend_from_slice(&chunk);
-						Ok(result)
-					})
-		});
-
-		let future = future.and_then(|body| {
-			Ok(HttpResponse {
-				body: Some(body),
+		result(Uri::from_str(&req.url.url(token)))
+			.map_err(From::from)
+			.and_then(move |uri| {
+				match req.body {
+					TelegramBody::Empty => client.get(uri),
+					TelegramBody::Json(body) => {
+						client.request(Request::post(uri)
+							.header(header::CONTENT_TYPE, "application/json")
+							.body(Body::from(body))
+							.unwrap())
+					}
+				}.map_err(From::from)
 			})
-		});
-
-		TelegramFuture::new(Box::new(future))
+			.and_then(|response| {
+				response.into_body()
+						.concat2()
+						.map_err(From::from)
+			})
+			.and_then(|body| {
+				Ok(HttpResponse {
+					body: Some(body.to_vec())
+				})
+			})
 	}
 }
 
 /// Returns default hyper connector. Uses one resolve thread and `HttpsConnector`.
-pub fn default_connector(handle: &Handle) -> Result<Box<Connector>, TelegramError> {
-	let connector = HttpsConnector::new(1, handle).map_err(|err| {
-		::std::io::Error::new(::std::io::ErrorKind::Other, format!("tls error: {}", err))
-	})?;
-	let config = Client::configure().connector(connector);
-	Ok(Box::new(HyperConnector::new(config.build(handle))))
+pub fn default_connector(_handle: &Handle) -> Result<Connector, TelegramError> {
+	let connector = HttpsConnector::new(1)
+		.map_err(|err| {
+			::std::io::Error::new(::std::io::ErrorKind::Other, format!("tls error: {}", err))
+		})?;
+	let client: HClient = Client::builder()
+		.build(connector);
+	Ok(Connector::new(client))
 }

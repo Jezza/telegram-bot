@@ -11,10 +11,16 @@ use tokio_curl::PerformError as TokioCurlError;
 #[cfg(feature = "hyper_connector")]
 use hyper::Error as HyperError;
 #[cfg(feature = "hyper_connector")]
-use hyper::error::UriError as HyperUriError;
+use hyper::http::Error as HyperHttpError;
+#[cfg(feature = "hyper_connector")]
+use hyper::http::uri::InvalidUri as HyperUriError;
 
 #[derive(Debug, Fail)]
 pub enum TelegramError {
+	#[fail(display = "__unreachable__")]
+	#[doc(hidden)]
+	__Unreachable,
+
 	#[fail(display = "IO Error")]
 	IO {
 		#[fail(cause)]
@@ -33,6 +39,13 @@ pub enum TelegramError {
 	HyperUri {
 		#[fail(cause)]
 		cause: HyperUriError,
+	},
+
+	#[cfg(feature = "hyper_connector")]
+	#[fail(display = "Hyper Http Error")]
+	HyperHttp {
+		#[fail(cause)]
+		cause: HyperHttpError
 	},
 
 	#[cfg(feature = "curl_connector")]
@@ -72,6 +85,15 @@ impl From<HyperError> for TelegramError {
 impl From<HyperUriError> for TelegramError {
 	fn from(e: HyperUriError) -> Self {
 		TelegramError::HyperUri {
+			cause: e
+		}
+	}
+}
+
+#[cfg(feature = "hyper_connector")]
+impl From<HyperHttpError> for TelegramError {
+	fn from(e: HyperHttpError) -> Self {
+		TelegramError::HyperHttp {
 			cause: e
 		}
 	}

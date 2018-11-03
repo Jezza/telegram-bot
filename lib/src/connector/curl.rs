@@ -1,35 +1,53 @@
 //! Connector with tokio-curl backend.
 
-use parking_lot::Mutex;
 use curl::easy::{Easy, List};
 use errors::TelegramError;
-use future::{NewTelegramFuture, TelegramFuture};
+use future::TelegramFuture;
 use futures::Future;
 use futures::future::result;
+use parking_lot::Mutex;
 use std::fmt;
 use std::rc::Rc;
 use std::sync::Arc;
-use super::_base::Connector;
 use telegram_bot_raw::{Body, HttpRequest, HttpResponse, Method};
 use tokio_core::reactor::Handle;
 use tokio_curl::Session;
 
 /// This connector uses `tokio-curl` backend.
-pub struct CurlConnector {
+pub struct Connector {
 	inner: Rc<Session>
 }
 
-impl fmt::Debug for CurlConnector {
-	fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-		formatter.write_str("curl connector")
+impl fmt::Debug for Connector {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		f.write_str("CurlConnector")
 	}
 }
 
-impl CurlConnector {
-	pub fn new(handle: &Handle) -> Self {
-		CurlConnector {
+impl Connector {
+	fn new(handle: &Handle) -> Self {
+		Connector {
 			inner: Rc::new(Session::new(handle.clone()))
 		}
+	}
+
+	pub fn request(&self, token: &str, req: HttpRequest) -> impl TelegramFuture<HttpResponse> {
+		let request = result(self.create_request(token, req));
+
+		let session = self.inner.clone();
+		let request = request.and_then(move |(handle, result)| {
+			session.perform(handle).map_err(From::from).join(Ok(result))
+		});
+
+		request.and_then(move |(_, result)| {
+			let mut swap = Vec::new();
+			let mut guard = result.lock();
+			let prev: &mut Vec<u8> = &mut guard;
+			::std::mem::swap(prev, &mut swap);
+			Ok(HttpResponse {
+				body: Some(swap)
+			})
+		})
 	}
 
 	fn create_request(&self, token: &str, request: HttpRequest) -> Result<(Easy, Arc<Mutex<Vec<u8>>>), TelegramError> {
@@ -67,31 +85,7 @@ impl CurlConnector {
 	}
 }
 
-impl Connector for CurlConnector {
-	fn request(&self, token: &str, req: HttpRequest) -> TelegramFuture<HttpResponse> {
-		let request = result(self.create_request(token, req));
-
-		let session = self.inner.clone();
-		let request = request.and_then(move |(handle, result)| {
-			session.perform(handle).map_err(From::from).join(Ok(result))
-		});
-
-		let future = request.and_then(move |(_, result)| {
-			let mut swap = Vec::new();
-			let mut guard = result.lock();
-			let prev: &mut Vec<u8> = &mut guard;
-			::std::mem::swap(prev, &mut swap);
-			Ok(HttpResponse {
-				body: Some(swap)
-			})
-		});
-
-		TelegramFuture::new(Box::new(future))
-	}
-}
-
 /// Returns default curl connector.
-pub fn default_connector(handle: &Handle) -> Result<Box<Connector>, TelegramError> {
-	let connector = CurlConnector::new(handle);
-	Ok(Box::new(connector))
+pub fn default_connector(handle: &Handle) -> Result<Connector, TelegramError> {
+	Ok(Connector::new(handle))
 }
